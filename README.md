@@ -26,10 +26,6 @@ Teste em ambiente de homologação. <span style="color: red; font-weight: bold;"
 
 ## Tabela de Testes
 
-
-- **Compatível:** In que a instalação/configuração dos pacotes foram com sucesso.
-- **Funcionou:** Significa que o comportamento esperado ou alguma configuração de ambiente não foi um sucesso.
-
 | Distribuição          | Versão         | Arquitetura  | Compatível (Sim/Não) | Funcionou (Sim/Não) | Observações|
 |:---------------------:|:--------------:|:------------:|:--------------------:|:-------------------:|:-----------|
 | Ubuntu Server              | 24.04          | 64bit       | Sim                  | Sim                 |
