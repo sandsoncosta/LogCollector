@@ -47,7 +47,7 @@ Teste em ambiente de homologação. <span style="color: red; font-weight: bold;"
 
 1. Baixe o script para o ambiente de teste:
    ```bash
-   wget https://github.com/seuusuario/seurepositorio.git
+   wget https://raw.githubusercontent.com/sandsoncosta/LogCollector/refs/heads/main/LogCollector.sh
    chmod +x LogCollector.sh
    sudo ./LogCollector.sh
    ```
