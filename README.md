@@ -26,16 +26,21 @@ Teste em ambiente de homologação. <span style="color: red; font-weight: bold;"
 
 ## Tabela de Testes
 
-| Distribuição          | Versão         | Arquitetura  | Compatível (Sim/Não) | Funcionou (Sim/Não) | Observações|
-|:---------------------:|:--------------:|:------------:|:--------------------:|:-------------------:|:-----------|
-| Ubuntu Server              | 24.04          | 64bit       | Sim                  | Sim                 |
-| Ubuntu Server              | 23.10          | 64bit       | Sim                  | Não                 | Problemas em atualizar repositórios. Precisa configurar lista de repos e testar novamente.|
-| Ubuntu Server              | 22.04          | 64bit       | Sim                  | Parcialmente        |Falha ao converter logs para json. Precisa revisar as configurações para identificar o problema.|
-| Ubuntu Server              | 20.04.4          | 64bit       | Sim                  | Sim                 ||
-| Ubuntu Server              | 18.04.6          | 64bit       | Sim                  | Sim                 ||
-| Debian               | 10 CLI  | 32bit       | Sim                   | Não                  | Audit: backlog limit exceeded. Backlog limit em 8192. Aumentar limite e verificar se o problema resolve. Por ser 23bits não vou lançar muitos esforços na correção.|
-| Debian               | 11 Server  | 32bit       | Sim                   | Não                  |O script não conseguiu reiniciar o audit. Deu algum problema ao reiniciar o serviço e travou no kernel(?). Quebrou a VM... Como é 32bits, nem vou tentar corrigir. |
-| Debian               | 11 Server  | 64bit       | Sim                   | Sim                  ||
+| Distribuição          | Versão         | Arquitetura  | Compatível (Sim/Não) | Funcionou (Sim/Não) | Observações| Vendor |
+|:---------------------:|:--------------:|:------------:|:--------------------:|:-------------------:|:-----------:|:-----:|
+| Ubuntu Server              | 24.04          | 64bit       | Sim                  | Sim                 ||OSBoxes|
+| Ubuntu Server              | 23.10          | 64bit       | Sim                  | Não                 | Problemas em atualizar repositórios. Precisa configurar lista de repos e testar novamente.|OSBoxes|
+| Ubuntu Server              | 22.04          | 64bit       | Sim                  | Parcialmente        |Falha ao converter logs para json. Precisa revisar as configurações para identificar o problema.|OSBoxes|
+| Ubuntu Server              | 20.04.4          | 64bit       | Sim                  | Sim                 ||OSBoxes|
+| Ubuntu Server              | 18.04.6          | 64bit       | Sim                  | Sim                 ||OSBoxes|
+| Debian               | 10 CLI  | 32bit       | Sim                   | Não                  | Audit: backlog limit exceeded. Backlog limit em 8192. Aumentar limite e verificar se o problema resolve. Por ser 23bits não vou lançar muitos esforços na correção.|OSBoxes|
+| Debian               | 11 Server  | 32bit       | Sim                   | Não                  |O script não conseguiu reiniciar o audit. Deu algum problema ao reiniciar o serviço e travou no kernel(?). Quebrou a VM... Como é 32bits, nem vou tentar corrigir. |OSBoxes|
+| Debian               | 11 Server  | 64bit       | Sim                   | Sim                  ||OSBoxes|
+| RHEL               | 6  | 64bit       | Não                   | Não                  |Pelos meus testes concluí que é incompatível.|Vagrant|
+| RHEL               | 7.9  | 64bit       | Sim                   | Inconclusivo                  |Não foi possível instalar o git. É necessário instalação manual (ainda não testei).|Vagrant|
+| RHEL               | 8  | 64bit       | Sim                   | Inconclusivo                  |Reinstalar a VM|Vagrant|
+| CentOS               | 8  | 64bit       | Sim                   | Inconclusivo                  |Script concluiu mas não chegou logs de audit, somente o padrão quando instala o RSyslog.|Vagrant|
+| CentOS               | 7  | 64bit       | Sim                   | Inconclusivo                  |Problemas com o update do sistema|Vagrant|
 
 ## Observações
 
@@ -56,3 +61,16 @@ Teste em ambiente de homologação. <span style="color: red; font-weight: bold;"
 
 1. https://github.com/Neo23x0/auditd/blob/master/audit.rules
 2. https://github.com/Scribery/aushape
+
+## Changelog
+
+###### 02/12/2024
+- Correção na definição de cores
+- Correção de saída de log de auditoria
+- Correção na detecção de SO
+- Correção na detecção de conexão com internet
+- Correção de instalação de pacotes em SOs
+- Inclusão de dir_temp para download de repos
+- Inclusão de download de repo via CURL quando não conseguir instalar o GIT.
+- Melhoria no restart de serviços
+- Melhoria na lógica do script
