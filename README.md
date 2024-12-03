@@ -26,21 +26,21 @@ Teste em ambiente de homologação. <span style="color: red; font-weight: bold;"
 
 ## Tabela de Testes
 
-| Distribuição          | Versão         | Arquitetura  | Compatível (Sim/Não) | Funcionou (Sim/Não) | Observações| Vendor |
-|:---------------------:|:--------------:|:------------:|:--------------------:|:-------------------:|:-----------:|:-----:|
-| Ubuntu Server              | 24.04          | 64bit       | Sim                  | Sim                 ||OSBoxes|
-| Ubuntu Server              | 23.10          | 64bit       | Sim                  | Não                 | Problemas em atualizar repositórios. Precisa configurar lista de repos e testar novamente.|OSBoxes|
-| Ubuntu Server              | 22.04          | 64bit       | Sim                  | Parcialmente        |Falha ao converter logs para json. Precisa revisar as configurações para identificar o problema.|OSBoxes|
-| Ubuntu Server              | 20.04.4          | 64bit       | Sim                  | Sim                 ||OSBoxes|
-| Ubuntu Server              | 18.04.6          | 64bit       | Sim                  | Sim                 ||OSBoxes|
-| Debian               | 10 CLI  | 32bit       | Sim                   | Não                  | Audit: backlog limit exceeded. Backlog limit em 8192. Aumentar limite e verificar se o problema resolve. Por ser 23bits não vou lançar muitos esforços na correção.|OSBoxes|
-| Debian               | 11 Server  | 32bit       | Sim                   | Não                  |O script não conseguiu reiniciar o audit. Deu algum problema ao reiniciar o serviço e travou no kernel(?). Quebrou a VM... Como é 32bits, nem vou tentar corrigir. |OSBoxes|
-| Debian               | 11 Server  | 64bit       | Sim                   | Sim                  ||OSBoxes|
-| RHEL               | 6  | 64bit       | Não                   | Não                  |Pelos meus testes concluí que é incompatível.|Vagrant|
-| RHEL               | 7.9  | 64bit       | Sim                   | Inconclusivo                  |Não foi possível instalar o git. É necessário instalação manual (ainda não testei).|Vagrant|
-| RHEL               | 8  | 64bit       | Sim                   | Inconclusivo                  |Reinstalar a VM|Vagrant|
-| CentOS               | 8  | 64bit       | Sim                   | Inconclusivo                  |Script concluiu mas não chegou logs de audit, somente o padrão quando instala o RSyslog.|Vagrant|
-| CentOS               | 7  | 64bit       | Sim                   | Inconclusivo                  |Problemas com o update do sistema|Vagrant|
+| Distribuição    | Versão         | Arquitetura  | Compatível (Sim/Não) | Funcionou (Sim/Não) | Observações| Vendor |
+|:------------------:|:-------:|:------------:|:--------------------:|:-------------------:|:-----------:|:-----:|
+| Ubuntu Server     | 24.04          | 64bit       | Parcialmente                  | Não                 |Problemas de compatibilidade com o pacote `libauparse`. Ele não foi encontrado nessa versão.|OSBoxes|
+| Ubuntu Server     | 23.10          | 64bit       | Sim                  | Não                 | Problemas em atualizar repositórios. Precisa configurar lista de repos e testar novamente.|OSBoxes|
+| Ubuntu Server     | 22.04          | 64bit       | Sim                  | Parcialmente        |Falha ao converter logs para json. Precisa revisar as configurações para identificar o problema.|OSBoxes|
+| Ubuntu Server     | **20.04.4**          | 64bit       | Sim                  | Sim                 ||OSBoxes|
+| Ubuntu Server     | **18.04.6**          | 64bit       | Sim                  | Sim                 ||OSBoxes|
+| Debian            | 10 CLI  | 32bit       | Sim                   | Não                  | Audit: backlog limit exceeded. Backlog limit em 8192. Aumentar limite e verificar se o problema resolve. Por ser 23bits não vou lançar muitos esforços na correção.|OSBoxes|
+| Debian            | 11 Server  | 32bit       | Sim                   | Não                  |O script não conseguiu reiniciar o audit. Deu algum problema ao reiniciar o serviço e travou no kernel(?). Quebrou a VM... Como é 32bits, nem vou tentar corrigir. |OSBoxes|
+| Debian            | **11 Server**  | 64bit       | Sim                   | Sim                  ||OSBoxes|
+| RHEL              | 6  | 64bit       | Não                   | Não                  |Pelos meus testes concluí que é incompatível.|Vagrant|
+| RHEL              | 7.9  | 64bit       | Sim                   | Inconclusivo                  |Não foi possível instalar o git. É necessário instalação manual (ainda não testei).|Vagrant|
+| RHEL              | 8  | 64bit       | Sim                   | Inconclusivo                  |Reinstalar a VM|Vagrant|
+| CentOS            | 8  | 64bit       | Sim                   | Inconclusivo                  |Script concluiu mas não chegou logs de audit, somente o padrão quando instala o RSyslog.|Vagrant|
+| CentOS            | 7  | 64bit       | Sim                   | Inconclusivo                  |Problemas com o update do sistema|Vagrant|
 
 ## Observações
 

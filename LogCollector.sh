@@ -24,13 +24,14 @@ fi
 # Solicita o IP do servidor coletor/syslog
 echo -e "${YELLOW}[*] Digite o IP do servidor do coletor/syslog:${NC}"
 read ip_collector
+echo -e "${YELLOW}[*] IP do servidor coletor configurado como: ${ip_collector}${NC}"
 
 # Detecta a versão do SO
 echo -e "${YELLOW}[*] Detectando versão do sistema operacional...${NC}"
 os_name=$(lsb_release -is 2>/dev/null || grep '^ID=' /etc/os-release | cut -d'=' -f2 | tr -d '"')
 
 case "$os_name" in
-  ubuntu|debian|centos|rhel|fedora|opensuse)
+  ubuntu|debian|Ubuntu|Debian|centos|rhel|fedora|opensuse)
     echo -e "${GREEN}[+] Sistema detectado:${NC} $os_name"
     ;;
   *)
@@ -43,7 +44,7 @@ esac
 echo -e "${YELLOW}[*] Verificando conexão com a Internet...${NC}"
 if ping -c 1 google.com &>/dev/null || ping -c 1 8.8.8.8 &>/dev/null; then
   echo -e "${GREEN}[+] Conexão detectada.${NC}"
-elif
+else
   echo -e "${RED}[!] Sem conexão com a internet.${NC}"
   exit 1
 fi
@@ -51,46 +52,60 @@ fi
 # Instalação de pacotes necessários
 echo -e "${YELLOW}[*] Instalando pacotes necessários...${NC}"
 
-if [[ "$os_name" =~ (ubuntu|debian) ]]; then
-  apt-get install -y git curl wget auditd gcc make autoconf automake libtool pkg-config
+if [[ "$os_name" =~ (ubuntu|debian|Ubuntu|Debian) ]]; then
+  apt-get install -y git curl wget auditd gcc make autoconf automake libtool pkg-config rsyslog libaudit libauparse
 elif [[ "$os_name" =~ (centos|rhel|fedora) ]]; then
-  yum install -y git curl wget audit gcc make autoconf automake libtool pkg-config
+  yum install -y git curl wget audit gcc make autoconf automake libtool pkg-config rsyslog audit-devel audit-libs-devel
 elif [[ "$os_name" == "opensuse" ]]; then
-  zypper install -y git curl wget audit gcc make autoconf automake libtool pkg-config
+  zypper install -y git curl wget audit gcc make autoconf automake libtool pkg-config rsyslog
+fi
+
+echo -e "${GREEN}[+] Pacotes instalados com sucesso.${NC}" | tee -a /var/log/install_script.log
+
+# Verificar se o git foi instalado corretamente
+if ! command -v git &>/dev/null; then
+  echo -e "${RED}[!] Git não encontrado ou não instalado corretamente.${NC} Continuando com o curl..."
 fi
 
 # Baixa e configura regras do auditd
 echo -e "${YELLOW}[*] Baixando e configurando regras do auditd...${NC}"
 
 if command -v wget &>/dev/null; then
-  wget -O /etc/audit/rules.d/audit.rules https://raw.githubusercontent.com/Neo23x0/auditd/master/audit.rules
+  wget -O /etc/audit/rules.d/audit.rules https://raw.githubusercontent.com/Neo23x0/auditd/master/audit.rules && \
+  echo -e "${GREEN}[+] Regras do auditd baixadas e configuradas.${NC}"
 elif command -v curl &>/dev/null; then
-  curl -o /etc/audit/rules.d/audit.rules https://raw.githubusercontent.com/Neo23x0/auditd/master/audit.rules
+  curl -o /etc/audit/rules.d/audit.rules https://raw.githubusercontent.com/Neo23x0/auditd/master/audit.rules && \
+  echo -e "${GREEN}[+] Regras do auditd baixadas e configuradas.${NC}"
+else
+  echo -e "${RED}[!] Nenhum gerenciador de downloads encontrado (wget ou curl).${NC}"
+  exit 1
 fi
 
 # Cria um diretório temporário para o download do Aushape
 temp_dir=$(mktemp -d)
+trap "rm -rf $temp_dir" EXIT
 cd "$temp_dir"
 
 # Instalação do Aushape
 echo -e "${YELLOW}[*] Preparando instalação do Aushape...${NC}"
 
 if command -v git &>/dev/null; then
-  git clone https://github.com/Scribery/aushape.git
+  # git clone https://github.com/Scribery/aushape.git && \
   cd aushape
 else
   echo -e "${YELLOW}[!] git não encontrado. Usando curl para baixar o Aushape...${NC}"
-  
-  curl -L https://github.com/Scribery/aushape/archive/refs/heads/master.tar.gz -o aushape.tar.gz
-  tar -xvzf aushape.tar.gz
+  curl -L https://github.com/Scribery/aushape/archive/refs/heads/master.tar.gz -o aushape.tar.gz && \
+  tar -xvzf aushape.tar.gz && \
   cd aushape-master
 fi
 
 echo -e "${YELLOW}[*] Configurando e instalando o Aushape...${NC}"
-autoreconf -i -f
-./configure --prefix=/usr --sysconfdir=/etc && make
-echo -e "${YELLOW}[+] Instalando pacote... aushape${NC}"
-make install
+autoreconf -i -f && \
+./configure --prefix=/usr --sysconfdir=/etc && \
+make && \
+echo -e "${GREEN}[+] Compilação do Aushape concluída.${NC}" && \
+make install && \
+echo -e "${GREEN}[+] Aushape instalado com sucesso.${NC}"
 
 # Cria o arquivo aushape-audispd-plugin
 echo -e "${YELLOW}[+] Configurando regras de logs.${NC}"
@@ -99,69 +114,71 @@ cat <<EOF > /usr/bin/aushape-audispd-plugin
 exec /usr/bin/aushape -l json --events-per-doc=none --fold=all -o syslog
 EOF
 chmod +x /usr/bin/aushape-audispd-plugin
+echo -e "${GREEN}[+] Arquivo aushape-audispd-plugin criado e executável.${NC}"
 
 # Verifica qual diretório existe e cria o arquivo de configuração
-if [ -d "/etc/audisp" ]; then
+if [ -d "/etc/audisp/plugins.d" ]; then
   config_dir="/etc/audisp/plugins.d"
-elif [ -d "/etc/audit" ]; then
+elif [ -d "/etc/audit/plugins.d" ]; then
   config_dir="/etc/audit/plugins.d"
 else
-  echo -e "${RED}[!] Nenhum diretório /etc/audisp ou /etc/audit encontrado. Não foi possível criar o arquivo de configuração.${NC}"
-  echo -e "${RED}[!] Por favor entre em contato com o suporte para configuração manual.${NC}"
+  echo -e "${RED}[!] Nenhum diretório /etc/audisp/plugins.d ou /etc/audit/plugins.d encontrado. Não foi possível criar o arquivo de configuração.${NC}"
+  echo -e "${RED}[!] Por favor, entre em contato com o suporte para configuração manual.${NC}"
   exit 1
 fi
 
 # Cria o arquivo de configuração do Aushape no diretório correto
-echo -e "${YELLOW}[+] Criando .conf do aushape...${NC}"
-cat <<EOF > $config_dir/aushape.conf
+echo -e "${YELLOW}[+] Criando aushape.conf...${NC}"
+cat <<EOF > "$config_dir/aushape.conf"
 active = yes
 direction = out
 path = /usr/bin/aushape-audispd-plugin
 type = always
 format = string
 EOF
-
-echo -e "${YELLOW}[+] Arquivo de configuração criado em: $config_dir/aushape.conf${NC}"
+echo -e "${GREEN}[+] Arquivo de configuração criado em: $config_dir/aushape.conf${NC}"
 
 # Reinicie o serviço auditd
-echo -e "${YELLOW}[+] Reinciando auditd...${NC}"
-if systemctl list-unit-files | grep -q "auditd.service"; then
-  systemctl restart auditd
+echo -e "${YELLOW}[+] Reiniciando auditd...${NC}"
+if systemctl restart auditd; then
+  echo -e "${GREEN}[+] auditd reiniciado com sucesso.${NC}"
 else
-  echo -e "${RED}[!] Serviço auditd não encontrado.${NC}"
+  echo -e "${RED}[!] Falha ao reiniciar auditd. Verifique o log ou reinicie manualmente.${NC}"
 fi
 
 # Configuração do rsyslog
 echo -e "${YELLOW}[*] Configurando o rsyslog...${NC}"
 if ! command -v rsyslogd &>/dev/null; then
-  echo -e "${YELLOW}[!] rsyslog não encontrado. Instalando...${NC}"
+  echo -e "${YELLOW}[!] rsyslogd não encontrado. Instalando...${NC}"
   if [[ "$os_name" =~ (ubuntu|debian) ]]; then
-    apt-get install -y rsyslog
+    apt-get install -y rsyslog && echo -e "${GREEN}[+] rsyslog instalado com sucesso.${NC}"
   elif [[ "$os_name" =~ (centos|rhel|fedora) ]]; then
-    yum install -y rsyslog
+    yum install -y rsyslog && echo -e "${GREEN}[+] rsyslog instalado com sucesso.${NC}"
   elif [[ "$os_name" == "opensuse" ]]; then
-    zypper install -y rsyslog
+    zypper install -y rsyslog && echo -e "${GREEN}[+] rsyslog instalado com sucesso.${NC}"
   fi
 else
-  echo -e "${YELLOW}[+] rsyslog já está instalado.${NC}"
+  echo -e "${GREEN}[+] rsyslog já está instalado.${NC}"
 fi
 
-# Agora, faz o backup do arquivo rsyslog.conf
+# Backup do arquivo rsyslog.conf
 if [ -f "/etc/rsyslog.conf" ]; then
   backup_path="/etc/rsyslog.conf.backup.$(date +%F_%T)"
-  echo -e "${YELLOW}[*] Backup do arquivo rsyslog.conf criado em ${backup_path}${NC}"
+  echo -e "${YELLOW}[*] Criando backup do rsyslog.conf em ${backup_path}${NC}"
   cp /etc/rsyslog.conf "$backup_path"
+else
+  echo -e "${YELLOW}[!] Arquivo rsyslog.conf não encontrado, criando novo arquivo de configuração.${NC}"
 fi
 
+# Recriando rsyslog.conf
 echo -e "${YELLOW}[+] Recriando rsyslog.conf...${NC}"
 cat <<EOF > /etc/rsyslog.conf
 #################
 #### MODULES ####
 #################
 
-module(load="imuxsock") # provides support for local system logging
-# module(load="imklog")   # provides kernel logging support
-
+module(load="imuxsock") # fornece suporte para logs do sistema local
+# module(load="imklog")   # fornece suporte para logs do kernel
 
 ###########################
 #### GLOBAL DIRECTIVES ####
@@ -195,15 +212,14 @@ user.*                          -/var/log/user.log
 local1.info
 
 #
-# Logging for the mail system.  Split it up so that
-# it is easy to write scripts to parse these files.
+# Logging para o sistema de e-mail. Dividido para facilitar scripts de análise.
 #
 # mail.info                     -/var/log/mail.info
 # mail.warn                     -/var/log/mail.warn
 # mail.err                      /var/log/mail.err
 
 #
-# Some "catch-all" log files.
+# Alguns arquivos de log "catch-all".
 #
 *.=debug;       auth,authpriv.none;     news.none;mail.none     -/var/log/debug
 *.=info;*.=notice;*.=warn;      auth,authpriv.none;     cron,daemon.none;       mail,news.none          -/var/log/messages
@@ -213,37 +229,31 @@ if (\$programname == "aushape") and (\$msg contains "apparmor" or \$msg contains
 }
 
 #
-# Emergencies are sent to everybody logged in.
+# Emergências são enviadas para todos os usuários logados.
 #
 #*.emerg                                :omusrmsg:
 #*.*                    @@192.168.145.35:514
-auth,authpriv.*     	 	@@${ip_collector}:514
-local1.info		@@${ip_collector}:514
+auth,authpriv.*                @@${ip_collector}:514
+local1.info                    @@${ip_collector}:514
 EOF
+
+# Para o Ansible
 # sed -i "s|@@{ip_collector}|@@$ip_collector|g" /etc/rsyslog.conf
 
-# Reinicie o auditd e rsyslog
-if systemctl list-unit-files | grep -q "auditd.service"; then
-  systemctl restart auditd
+# Reinicie o serviço rsyslog
+echo -e "${YELLOW}[+] Reiniciando rsyslog...${NC}"
+if systemctl restart rsyslog; then
+  echo -e "${GREEN}[+] rsyslog reiniciado com sucesso.${NC}"
 else
-  echo -e "${RED}[!] Serviço auditd não encontrado.${NC}"
+  echo -e "${RED}[!] Falha ao reiniciar rsyslog. Verifique o log ou reinicie manualmente.${NC}"
 fi
 
-if systemctl list-unit-files | grep -q "rsyslog.service"; then
-  systemctl restart rsyslog
-else
-  echo -e "${RED}[!] Serviço rsyslog não encontrado.${NC}"
-fi
-
-
-# Adicione comando à cron
+# Adiciona comando à cron para Heartbeat
 echo -e "${YELLOW}[+] Incluindo na cron o log de Heartbeat...${NC}"
-#echo -e "*/5 * * * * root logger -p local1.info -t heartbeat 'Heartbeat log active'" >> /etc/crontab
-if ! grep -q "logger -p local1.info -t heartbeat 'Heartbeat log active'" /etc/crontab; then
-  echo "*/5 * * * * root logger -p local1.info -t heartbeat 'Heartbeat log active'" >> /etc/crontab
-fi
+echo "* * * * * root logger -p local1.info -t heartbeat 'Heartbeat log active'" >> /etc/crontab
+echo "* * * * * root logger -p local1.info -t heartbeat 'Versao SO:Ubuntu Server 22.04 64bit'" >> /etc/crontab
+echo -e "${GREEN}[+] Heartbeat adicionado à crontab.${NC}"
 
-
-# Salve o log em um arquivo .log
+# Salva o log em um arquivo .log
 echo -e "${YELLOW}Log criado em /var/log/install_script.log${NC}"
 echo -e "${GREEN}Script concluído!${NC}"
