@@ -21,24 +21,35 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+# Detecta a versão do SO
+echo -e "${YELLOW}[*] Detectando versão do sistema operacional...${NC}"
+
+if [ -f /etc/os-release ]; then
+  os_name=$(lsb_release -is 2>/dev/null || grep '^ID=' /etc/os-release | cut -d'=' -f2 | tr -d '"')
+elif [ -f /etc/centos-release ]; then
+  os_name=$(cat /etc/centos-release)
+else
+  os_name="Sistema não compatível com este script."
+fi
+os_name=$(echo "$os_name" | tr '[:upper:]' '[:lower:]')
+
+# Lógica para identificar o sistema operacional
+if [[ "$os_name" == *"centos"* ]]; then
+  echo -e "${GREEN}[+] Sistema detectado: CentOS${NC}"
+  os_name="centos"
+elif [[ "$os_name" == "rhel" ]]; then
+  echo -e "${GREEN}[+] Sistema detectado: Red Hat Enterprise Linux${NC}"
+elif [[ "$os_name" == "ubuntu" || "$os_name" == "debian" ]]; then
+  echo -e "${GREEN}[+] Sistema detectado: $os_name${NC}"
+else
+  echo -e "${RED}[!] Sistema não compatível com este script.${NC}"
+  exit 1
+fi
+
 # Solicita o IP do servidor coletor/syslog
 echo -e "${YELLOW}[*] Digite o IP do servidor do coletor/syslog:${NC}"
 read ip_collector
 echo -e "${YELLOW}[*] IP do servidor coletor configurado como: ${ip_collector}${NC}"
-
-# Detecta a versão do SO
-echo -e "${YELLOW}[*] Detectando versão do sistema operacional...${NC}"
-os_name=$(lsb_release -is 2>/dev/null || grep '^ID=' /etc/os-release | cut -d'=' -f2 | tr -d '"')
-
-case "$os_name" in
-  ubuntu|debian|Ubuntu|Debian|centos|rhel|fedora|opensuse)
-    echo -e "${GREEN}[+] Sistema detectado:${NC} $os_name"
-    ;;
-  *)
-    echo -e "${RED}[!] Sistema não compatível com este script.${NC}"
-    exit 1
-    ;;
-esac
 
 # Teste de conexão com a Internet
 echo -e "${YELLOW}[*] Verificando conexão com a Internet...${NC}"
@@ -54,7 +65,7 @@ echo -e "${YELLOW}[*] Instalando pacotes necessários...${NC}"
 
 if [[ "$os_name" =~ (ubuntu|debian|Ubuntu|Debian) ]]; then
   apt-get install -y git curl wget auditd gcc make autoconf automake libtool pkg-config rsyslog libaudit libauparse
-elif [[ "$os_name" =~ (centos|rhel|fedora) ]]; then
+elif [[ "$os_name" =~ (*CentOS*|*centos*|rhel|fedora) ]]; then
   yum install -y git curl wget audit gcc make autoconf automake libtool pkg-config rsyslog audit-devel audit-libs-devel
 elif [[ "$os_name" == "opensuse" ]]; then
   zypper install -y git curl wget audit gcc make autoconf automake libtool pkg-config rsyslog
@@ -152,7 +163,7 @@ if ! command -v rsyslogd &>/dev/null; then
   echo -e "${YELLOW}[!] rsyslogd não encontrado. Instalando...${NC}"
   if [[ "$os_name" =~ (ubuntu|debian) ]]; then
     apt-get install -y rsyslog && echo -e "${GREEN}[+] rsyslog instalado com sucesso.${NC}"
-  elif [[ "$os_name" =~ (centos|rhel|fedora) ]]; then
+  elif [[ "$os_name" =~ (*CentOS*|*centos*|rhel|fedora) ]]; then
     yum install -y rsyslog && echo -e "${GREEN}[+] rsyslog instalado com sucesso.${NC}"
   elif [[ "$os_name" == "opensuse" ]]; then
     zypper install -y rsyslog && echo -e "${GREEN}[+] rsyslog instalado com sucesso.${NC}"

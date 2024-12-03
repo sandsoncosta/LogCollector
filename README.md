@@ -37,10 +37,11 @@ Teste em ambiente de homologação. <span style="color: red; font-weight: bold;"
 | Debian            | 11 Server  | 32bit       | Sim                   | Não                  |O script não conseguiu reiniciar o audit. Deu algum problema ao reiniciar o serviço e travou no kernel(?). Quebrou a VM... Como é 32bits, nem vou tentar corrigir. |OSBoxes|
 | Debian            | **11 Server**  | 64bit       | Sim                   | Sim                  ||OSBoxes|
 | RHEL              | 6  | 64bit       | Não                   | Não                  |Pelos meus testes concluí que é incompatível.|Vagrant|
-| RHEL              | 7.9  | 64bit       | Sim                   | Inconclusivo                  |Não foi possível instalar o git. É necessário instalação manual (ainda não testei).|Vagrant|
+| RHEL              | 7.9  | 64bit       | Sim                   | Inconclusivo                  |Não foi possível instalar o git. Problemas de compatibilidade com o pacote `libauparse`. Ele não foi encontrado nessa versão.|Vagrant|
 | RHEL              | 8  | 64bit       | Sim                   | Inconclusivo                  |Reinstalar a VM|Vagrant|
+| CentOS            | 6.10  | 64bit       | Não                   | Não                  |O script não é compatível. Não consegui instalar pacotes.|Vagrant|
+| CentOS            | 7.9.2009  | 64bit       | Não                   | Não                  |O script não é compatível. Não consegui atualizar repos.|Vagrant|
 | CentOS            | 8  | 64bit       | Sim                   | Inconclusivo                  |Script concluiu mas não chegou logs de audit, somente o padrão quando instala o RSyslog.|Vagrant|
-| CentOS            | 7  | 64bit       | Sim                   | Inconclusivo                  |Problemas com o update do sistema|Vagrant|
 
 ## Observações
 
@@ -74,3 +75,8 @@ Teste em ambiente de homologação. <span style="color: red; font-weight: bold;"
 - Inclusão de download de repo via CURL quando não conseguir instalar o GIT.
 - Melhoria no restart de serviços
 - Melhoria na lógica do script
+
+###### 03/12/2024
+- Melhoria na lógica para detectar OS CentOS(Não surtiu efeito desejado).
+- Alterado a lógica para identificar primeiro o SO e depois, se compatível, solicitar o IP do coletor.
+- Removido, temporariamente, verificação para Fedora e OpenSUSE.
